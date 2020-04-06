@@ -5,624 +5,647 @@ import host
 from bf2.stats.stats import *
 from game.stats.constants import *
 
-#g_debug = 1
+# g_debug = 1
 
-def dconStatsinit():    
-    host.registerHandler('PlayerConnect', dconOnPlayerConnect, 1)
-    host.registerHandler('PlayerDisconnect', onPlayerDisconnect, 1)
-    host.registerHandler('Reset', onReset, 1)
+
+def dconStatsinit():
+    host.registerHandler("PlayerConnect", dconOnPlayerConnect, 1)
+    host.registerHandler("PlayerDisconnect", onPlayerDisconnect, 1)
+    host.registerHandler("Reset", onReset, 1)
 
     host.registerGameStatusHandler(dconOnGameStatusChanged)
 
-    if g_debug: print "dcon stats module initialized."
-
-
+    if g_debug:
+        print "dcon stats module initialized."
 
 
 def dconOnPlayerConnect(player):
-	if g_debug: print "dconOnGameStatusChanged"
-	# see if player already has a record
-	player.stats = None
-	connectingProfileId = player.getProfileId()
-	for stats in sessionPlayerStatsMap.itervalues():
-		if connectingProfileId > 0 and connectingProfileId == stats.profileId:
-			if g_debug: print "Found old player record, profileId ", stats.profileId
-			player.stats = stats
-			player.stats.reconnect(player)
-	
-	if not player.stats:
-	
-		if g_debug: print "Creating new record for player profileId ", connectingProfileId
-		
-		# add stats record
-		global playerConnectionOrderIterator
-		id = playerConnectionOrderIterator
-		
-		newPlayerStats = PlayerStat(player)
-		
-		sessionPlayerStatsMap[id] = newPlayerStats
-		player.stats = sessionPlayerStatsMap[id]
-			
-		player.stats.connectionOrderNr = playerConnectionOrderIterator
-		playerConnectionOrderIterator += 1
-		
-	player.score.rank = player.stats.rank
-	
-	
-	
+    if g_debug:
+        print "dconOnGameStatusChanged"
+    # see if player already has a record
+    player.stats = None
+    connectingProfileId = player.getProfileId()
+    for stats in sessionPlayerStatsMap.itervalues():
+        if connectingProfileId > 0 and connectingProfileId == stats.profileId:
+            if g_debug:
+                print "Found old player record, profileId ", stats.profileId
+            player.stats = stats
+            player.stats.reconnect(player)
+
+    if not player.stats:
+
+        if g_debug:
+            print "Creating new record for player profileId ", connectingProfileId
+
+        # add stats record
+        global playerConnectionOrderIterator
+        id = playerConnectionOrderIterator
+
+        newPlayerStats = PlayerStat(player)
+
+        sessionPlayerStatsMap[id] = newPlayerStats
+        player.stats = sessionPlayerStatsMap[id]
+
+        player.stats.connectionOrderNr = playerConnectionOrderIterator
+        playerConnectionOrderIterator += 1
+
+    player.score.rank = player.stats.rank
+
+
 def dconOnGameStatusChanged(status):
-	if g_debug: print "dconOnGameStatusChanged"
-	if status == bf2.GameStatus.Playing:
-		
-		# find highest player still connected
-		highestPid = -1
-		for pid in sessionPlayerStatsMap:
-			if pid > highestPid:
-				highestPid = pid
-		
-		global playerConnectionOrderIterator
-		playerConnectionOrderIterator = highestPid + 1
-		if g_debug: print "Reset orderiterator to %d based on highest pid kept" % playerConnectionOrderIterator
+    if g_debug:
+        print "dconOnGameStatusChanged"
+    if status == bf2.GameStatus.Playing:
 
-		# Reconnect players
-		#if len(sessionPlayerStatsMap) == 0:
-			#print("Reloading players");
-		for p in bf2.playerManager.getPlayers():
-			onPlayerConnect(p)
-	
-		global army
-		roundArmies[1] = getArmy(bf2.gameLogic.getTeamName(1))
-		roundArmies[2] = getArmy(bf2.gameLogic.getTeamName(2))
+        # find highest player still connected
+        highestPid = -1
+        for pid in sessionPlayerStatsMap:
+            if pid > highestPid:
+                highestPid = pid
 
-		# All other hooks	
-		host.registerHandler('PlayerKilled', dconOnPlayerKilled)
-		host.registerHandler('PlayerDeath', dconOnPlayerDeath)
-		host.registerHandler('EnterVehicle', dconOnEnterVehicle)
-		host.registerHandler('ExitVehicle', dconOnExitVehicle)
-		host.registerHandler('PickupKit', dconOnPickupKit)
-		host.registerHandler('DropKit', dconOnDropKit)
-		host.registerHandler('PlayerChangedSquad', onPlayerChangedSquad)
-		host.registerHandler('ChangedCommander', onChangedCommander)
-		host.registerHandler('ChangedSquadLeader', onChangedSquadLeader)
-		host.registerHandler('PlayerChangeWeapon', dconOnPlayerChangeWeapon)
-		host.registerHandler('PlayerBanned', onPlayerBanned)
-		host.registerHandler('PlayerKicked', onPlayerKicked)
-		host.registerHandler('PlayerSpawn', dconOnPlayerSpawn)
-		host.registerHandler('DeployGrapplingHook', onDeployGrapplingHook)
-		host.registerHandler('DeployZipLine', onDeployZipLine)
-		host.registerHandler('DeployTactical', onDeployTactical)
+        global playerConnectionOrderIterator
+        playerConnectionOrderIterator = highestPid + 1
+        if g_debug:
+            print "Reset orderiterator to %d based on highest pid kept" % playerConnectionOrderIterator
 
-		for s in sessionPlayerStatsMap.itervalues():
-			s.reset()
+        # Reconnect players
+        # if len(sessionPlayerStatsMap) == 0:
+        # print("Reloading players");
+        for p in bf2.playerManager.getPlayers():
+            onPlayerConnect(p)
 
-		for p in bf2.playerManager.getPlayers():
-			p.stats.reinit(p)
-			p.stats.wasHereAtStart = 1
-			
-		bf2.playerManager.enableScoreEvents()
+        global army
+        roundArmies[1] = getArmy(bf2.gameLogic.getTeamName(1))
+        roundArmies[2] = getArmy(bf2.gameLogic.getTeamName(2))
 
-		# stats have all been cleared enable next end of round stats
-		setSendEndOfRoundStats( True )
+        # All other hooks
+        host.registerHandler("PlayerKilled", dconOnPlayerKilled)
+        host.registerHandler("PlayerDeath", dconOnPlayerDeath)
+        host.registerHandler("EnterVehicle", dconOnEnterVehicle)
+        host.registerHandler("ExitVehicle", dconOnExitVehicle)
+        host.registerHandler("PickupKit", dconOnPickupKit)
+        host.registerHandler("DropKit", dconOnDropKit)
+        host.registerHandler("PlayerChangedSquad", onPlayerChangedSquad)
+        host.registerHandler("ChangedCommander", onChangedCommander)
+        host.registerHandler("ChangedSquadLeader", onChangedSquadLeader)
+        host.registerHandler("PlayerChangeWeapon", dconOnPlayerChangeWeapon)
+        host.registerHandler("PlayerBanned", onPlayerBanned)
+        host.registerHandler("PlayerKicked", onPlayerKicked)
+        host.registerHandler("PlayerSpawn", dconOnPlayerSpawn)
+        host.registerHandler("DeployGrapplingHook", onDeployGrapplingHook)
+        host.registerHandler("DeployZipLine", onDeployZipLine)
+        host.registerHandler("DeployTactical", onDeployTactical)
+
+        for s in sessionPlayerStatsMap.itervalues():
+            s.reset()
+
+        for p in bf2.playerManager.getPlayers():
+            p.stats.reinit(p)
+            p.stats.wasHereAtStart = 1
+
+        bf2.playerManager.enableScoreEvents()
+
+        # stats have all been cleared enable next end of round stats
+        setSendEndOfRoundStats(True)
+
+    elif status == bf2.GameStatus.EndGame:
+
+        # finalize stats and send snapshot
+        for p in bf2.playerManager.getPlayers():
+            p.stats.wasHereAtEnd = 1
+            finalizePlayer(p)
+
+            # check ensure we only send the end of round stats once
+        if getSendEndOfRoundStats():
+            # show end-of-round information
+            setSendEndOfRoundStats(False)
+            bf2.stats.endofround.invoke()
+
+            # if not ranked, clean out stats vectors
+        if not host.ss_getParam("ranked"):
+            playerConnectionOrderIterator = 0
+            sessionPlayerStatsMap.clear()
+            if (host.ss_getParam("gameMode") == "gpm_coop") or (
+                host.ss_getParam("gameMode") == "sp1"
+            ):
+                for p in bf2.playerManager.getPlayers():
+                    if not p.isAIPlayer():
+                        onPlayerConnect(p)
 
 
-	elif status == bf2.GameStatus.EndGame:
+class dconPlayerStat:
+    def __init__(self, player):
+        self.profileId = player.getProfileId()
+        self.playerId = player.index
+        self.id = self.playerId
+        self.connectionOrderNr = 0
+        self.rank = 0
 
-		# finalize stats and send snapshot
-		for p in bf2.playerManager.getPlayers():
-			p.stats.wasHereAtEnd = 1
-			finalizePlayer(p)
-			
-		# check ensure we only send the end of round stats once
-		if getSendEndOfRoundStats():
-			# show end-of-round information
-			setSendEndOfRoundStats( False )
-			bf2.stats.endofround.invoke()
+        self.reinit(player)
+        self.reset()
 
-		# if not ranked, clean out stats vectors
-		if not host.ss_getParam('ranked'):
-			playerConnectionOrderIterator = 0
-			sessionPlayerStatsMap.clear()
-			if( (host.ss_getParam('gameMode') == "gpm_coop") or (host.ss_getParam('gameMode') == "sp1") ):
-				for p in bf2.playerManager.getPlayers():
-   					if not p.isAIPlayer():
-   						onPlayerConnect(p)
+    def reinit(self, player):
+        self.name = player.getName()
+        self.ipaddr = player.getAddress()
+        self.localScore = player.score
 
+    def reset(self):
+        self.connectAt = date()
+        self.timeOnLine = 0
 
-class dconPlayerStat: 
-	def __init__(self, player):
-		self.profileId = player.getProfileId()
-		self.playerId = player.index
-		self.id = self.playerId
-		self.connectionOrderNr = 0
-		self.rank = 0
-		
-		self.reinit(player)
-		self.reset()
+        self.score = 0
+        self.cmdScore = 0
+        self.teamScore = 0
+        self.skillScore = 0
+        self.kills = 0
+        self.teamkills = 0
+        self.deaths = 0
 
-	def reinit(self, player):
-		self.name = player.getName()
-		self.ipaddr = player.getAddress()
-		self.localScore = player.score		
-	
-	def reset(self):
-		self.connectAt = date()
-		self.timeOnLine = 0
-		
-		self.score 	= 0
-		self.cmdScore 	= 0
-		self.teamScore 	= 0
-		self.skillScore = 0
-		self.kills 	= 0
-		self.teamkills 	= 0
-		self.deaths 	= 0
-				
-		self.vehicles = {}
-		for v in range(0, NUM_VEHICLE_TYPES + 1):
-			if not v in self.vehicles:
-				self.vehicles[v] = VehicleStat(v)
-			else:
-				self.vehicles[v].reset()
-	
-		self.weapons = {}
-		for w in range(0, NUM_WEAPON_TYPES + 1):
-			if not w in self.weapons:
-				self.weapons[w] = WeaponStat(w)
-			else:
-				self.weapons[w].reset()
-	
-		self.kits = {}
-		for k in range(0, NUM_KIT_TYPES + 1):
-			if not k in self.kits:
-				self.kits[k] = KitStat(k)
-			else:			
-				self.kits[k].reset()
-	
-		self.killedByPlayer = {}
-		self.killedPlayer = {}
+        self.vehicles = {}
+        for v in range(0, NUM_VEHICLE_TYPES + 1):
+            if not v in self.vehicles:
+                self.vehicles[v] = VehicleStat(v)
+            else:
+                self.vehicles[v].reset()
 
-		self.team = 0
+        self.weapons = {}
+        for w in range(0, NUM_WEAPON_TYPES + 1):
+            if not w in self.weapons:
+                self.weapons[w] = WeaponStat(w)
+            else:
+                self.weapons[w].reset()
 
-		self.localScore.reset()
-		
-		self.bulletsFired = 0
-		self.bulletsHit = 0
+        self.kits = {}
+        for k in range(0, NUM_KIT_TYPES + 1):
+            if not k in self.kits:
+                self.kits[k] = KitStat(k)
+            else:
+                self.kits[k].reset()
 
-		self.currentKillStreak = 0
-		self.longestKillStreak = 0
-		self.currentDeathStreak = 0
-		self.longestDeathStreak = 0
-		self.wasHereAtStart = 0
-		self.wasHereAtEnd = 0
-		self.complete = 0
-		self.medals = None
-		
-		self.spawnedTeam = 3
-		self.spawnedAt = 0
-		self.becameCmdAt = 0
-		self.becameSqlAt = 0
-		self.joinedSquadAt = 0
-		self.rawTimePlayed = 0
-		self.rawTimeAsCmd = 0
-		self.rawTimeAsSql = 0
-		self.rawTimeInSquad = 0
-		
-		self.timesBanned = 0
-		self.timesKicked = 0
-		
-		self.timeAsArmy = {}
-		for a in range(0, NUM_ARMIES + 1):
-			self.timeAsArmy[a] = 0
-			
-		self.currentWeaponType = NUM_WEAPON_TYPES
+        self.killedByPlayer = {}
+        self.killedPlayer = {}
 
-	def __getattr__(self, name):
-		if name in self.__dict__: return self.__dict__[name]
-		elif name == 'timePlayed':
-			if self.spawnedAt:
-				timeDiff = date() - self.spawnedAt
-				self.rawTimePlayed += timeDiff
-				self.timeAsArmy[roundArmies[self.spawnedTeam]] += timeDiff
-				self.spawnedAt = date()
-			return self.rawTimePlayed
-		elif name == 'timeAsCmd':
-			if self.becameCmdAt:
-				self.rawTimeAsCmd += date() - self.becameCmdAt 
-				self.becameCmdAt = date()
-			return self.rawTimeAsCmd
-		elif name == 'timeAsSql':
-			if self.becameSqlAt:
-				self.rawTimeAsSql += date() - self.becameSqlAt 
-				self.becameSqlAt = date()
-			return self.rawTimeAsSql
-		elif name == 'timeInSquad':
-			if self.joinedSquadAt:
-				self.rawTimeInSquad += date() - self.joinedSquadAt 
-				self.joinedSquadAt = date()
-			return self.rawTimeInSquad
-		elif name == 'accuracy':
-			if self.bulletsFired == 0:
-				return 0
-			else:
-				return 1.0 * self.bulletsHit / self.bulletsFired
-		else:
-			raise AttributeError, name
-						
-	# when same player rejoins server
-	def reconnect(self, player):
-		self.connectAt = date()
-		self.ipaddr = player.getAddress()
-		
-		bf2.playerManager.disableScoreEvents()
-		
-		print "Reattaching score object from old dead player %d to new player %d" % (self.localScore.index, player.index)
+        self.team = 0
 
-		player.score = self.localScore
-		player.score.index = player.index
+        self.localScore.reset()
 
-		player.score.score 	= self.score
-		player.score.cmdScore 	= self.cmdScore
-		player.score.rplScore 	= self.teamScore
-		player.score.skillScore = self.skillScore
-		player.score.kills 	= self.kills
-		player.score.TKs 	= self.teamkills
-		player.score.deaths 	= self.deaths
+        self.bulletsFired = 0
+        self.bulletsHit = 0
 
-		player.score.rank	= self.rank
+        self.currentKillStreak = 0
+        self.longestKillStreak = 0
+        self.currentDeathStreak = 0
+        self.longestDeathStreak = 0
+        self.wasHereAtStart = 0
+        self.wasHereAtEnd = 0
+        self.complete = 0
+        self.medals = None
 
-		bf2.playerManager.enableScoreEvents()	
-		
-	# calculate final stats values for this player (disconnected or end of round)
-	def finalize(self, player):
-		self.copyPlayerData(player)
-		
-		if self.currentWeaponType != NUM_WEAPON_TYPES:
-			self.weapons[self.currentWeaponType].exit(player)
-			self.currentWeaponType = NUM_WEAPON_TYPES
+        self.spawnedTeam = 3
+        self.spawnedAt = 0
+        self.becameCmdAt = 0
+        self.becameSqlAt = 0
+        self.joinedSquadAt = 0
+        self.rawTimePlayed = 0
+        self.rawTimeAsCmd = 0
+        self.rawTimeAsSql = 0
+        self.rawTimeInSquad = 0
 
-		stopSpawned(player)	
-		stopInSquad(player)
-		stopAsSql(player)
-		stopAsCmd(player)
-		
-		if self.wasHereAtStart == 1 and self.wasHereAtEnd == 1:
-			self.complete = 1
-			
-		# sum up vehicles & kits
-		dconCollectBulletsFired(player)
-		finalizeBulletsFired(player)
-			
-		for v in player.stats.vehicles.itervalues():
-			if v.enterAt != 0: v.exit(player)
-		for v in player.stats.kits.itervalues():
-			if v.enterAt != 0: v.exit(player)
-		for v in player.stats.weapons.itervalues():
-			if v.enterAt != 0: v.exit(player)
-					
-	# copy data to player-stats, as player might not be awailable after this
-	def copyPlayerData(self, player):
-		self.timeOnLine += date() - self.connectAt
+        self.timesBanned = 0
+        self.timesKicked = 0
 
-		self.localScore = player.score
-		
-		self.score 	= player.score.score
-		self.cmdScore 	= player.score.cmdScore	
-		self.teamScore 	= player.score.rplScore
-		self.skillScore = player.score.skillScore
+        self.timeAsArmy = {}
+        for a in range(0, NUM_ARMIES + 1):
+            self.timeAsArmy[a] = 0
 
-		if self.score < 0: 	self.score = 0
-		if self.cmdScore < 0: 	self.cmdScore = 0
-		if self.teamScore < 0: 	self.teamScore = 0
-		if self.skillScore < 0: self.skillScore = 0
-				
-		self.kills 	= player.score.kills
-		self.teamkills 	= player.score.TKs
-		self.deaths 	= player.score.deaths
+        self.currentWeaponType = NUM_WEAPON_TYPES
 
-		self.rank = player.score.rank
-		self.army = roundArmies[player.getTeam()]
-		self.team = player.getTeam()
-		
-		if host.ss_getParam('ranked'):
-			if hasattr(player, 'medals'):
-				self.medals = player.medals
-			else:
-				if g_debug: print "Player had no medal stats. pid=", player.index
+    def __getattr__(self, name):
+        if name in self.__dict__:
+            return self.__dict__[name]
+        elif name == "timePlayed":
+            if self.spawnedAt:
+                timeDiff = date() - self.spawnedAt
+                self.rawTimePlayed += timeDiff
+                self.timeAsArmy[roundArmies[self.spawnedTeam]] += timeDiff
+                self.spawnedAt = date()
+            return self.rawTimePlayed
+        elif name == "timeAsCmd":
+            if self.becameCmdAt:
+                self.rawTimeAsCmd += date() - self.becameCmdAt
+                self.becameCmdAt = date()
+            return self.rawTimeAsCmd
+        elif name == "timeAsSql":
+            if self.becameSqlAt:
+                self.rawTimeAsSql += date() - self.becameSqlAt
+                self.becameSqlAt = date()
+            return self.rawTimeAsSql
+        elif name == "timeInSquad":
+            if self.joinedSquadAt:
+                self.rawTimeInSquad += date() - self.joinedSquadAt
+                self.joinedSquadAt = date()
+            return self.rawTimeInSquad
+        elif name == "accuracy":
+            if self.bulletsFired == 0:
+                return 0
+            else:
+                return 1.0 * self.bulletsHit / self.bulletsFired
+        else:
+            raise AttributeError, name
+
+            # when same player rejoins server
+
+    def reconnect(self, player):
+        self.connectAt = date()
+        self.ipaddr = player.getAddress()
+
+        bf2.playerManager.disableScoreEvents()
+
+        print "Reattaching score object from old dead player %d to new player %d" % (
+            self.localScore.index,
+            player.index,
+        )
+
+        player.score = self.localScore
+        player.score.index = player.index
+
+        player.score.score = self.score
+        player.score.cmdScore = self.cmdScore
+        player.score.rplScore = self.teamScore
+        player.score.skillScore = self.skillScore
+        player.score.kills = self.kills
+        player.score.TKs = self.teamkills
+        player.score.deaths = self.deaths
+
+        player.score.rank = self.rank
+
+        bf2.playerManager.enableScoreEvents()
+
+        # calculate final stats values for this player (disconnected or end of round)
+
+    def finalize(self, player):
+        self.copyPlayerData(player)
+
+        if self.currentWeaponType != NUM_WEAPON_TYPES:
+            self.weapons[self.currentWeaponType].exit(player)
+            self.currentWeaponType = NUM_WEAPON_TYPES
+
+        stopSpawned(player)
+        stopInSquad(player)
+        stopAsSql(player)
+        stopAsCmd(player)
+
+        if self.wasHereAtStart == 1 and self.wasHereAtEnd == 1:
+            self.complete = 1
+
+            # sum up vehicles & kits
+        dconCollectBulletsFired(player)
+        finalizeBulletsFired(player)
+
+        for v in player.stats.vehicles.itervalues():
+            if v.enterAt != 0:
+                v.exit(player)
+        for v in player.stats.kits.itervalues():
+            if v.enterAt != 0:
+                v.exit(player)
+        for v in player.stats.weapons.itervalues():
+            if v.enterAt != 0:
+                v.exit(player)
+
+            # copy data to player-stats, as player might not be awailable after this
+
+    def copyPlayerData(self, player):
+        self.timeOnLine += date() - self.connectAt
+
+        self.localScore = player.score
+
+        self.score = player.score.score
+        self.cmdScore = player.score.cmdScore
+        self.teamScore = player.score.rplScore
+        self.skillScore = player.score.skillScore
+
+        if self.score < 0:
+            self.score = 0
+        if self.cmdScore < 0:
+            self.cmdScore = 0
+        if self.teamScore < 0:
+            self.teamScore = 0
+        if self.skillScore < 0:
+            self.skillScore = 0
+
+        self.kills = player.score.kills
+        self.teamkills = player.score.TKs
+        self.deaths = player.score.deaths
+
+        self.rank = player.score.rank
+        self.army = roundArmies[player.getTeam()]
+        self.team = player.getTeam()
+
+        if host.ss_getParam("ranked"):
+            if hasattr(player, "medals"):
+                self.medals = player.medals
+            else:
+                if g_debug:
+                    print "Player had no medal stats. pid=", player.index
 
 
 class dconWeaponStat(ObjectStat):
-	def __init__(self, type):
-		ObjectStat.__init__(self, type)
-		self.reset()
-		
-	def reset(self):
-		ObjectStat.reset(self)
-		
-	def enter(self, player):
-		if player.stats.currentWeaponType != NUM_WEAPON_TYPES:
-			player.stats.weapons[player.stats.currentWeaponType].exit(player)
-		player.stats.currentWeaponType = self.type
+    def __init__(self, type):
+        ObjectStat.__init__(self, type)
+        self.reset()
 
-		ObjectStat.enter(self, player)
-	
-	def exit(self,player):
-		time = date() - self.enterAt
+    def reset(self):
+        ObjectStat.reset(self)
 
-		ObjectStat.exit(self, player)
+    def enter(self, player):
+        if player.stats.currentWeaponType != NUM_WEAPON_TYPES:
+            player.stats.weapons[player.stats.currentWeaponType].exit(player)
+        player.stats.currentWeaponType = self.type
+
+        ObjectStat.enter(self, player)
+
+    def exit(self, player):
+        time = date() - self.enterAt
+
+        ObjectStat.exit(self, player)
 
 
-def dconOnEnterVehicle(player, vehicle, freeSoldier = False):
+def dconOnEnterVehicle(player, vehicle, freeSoldier=False):
 
-	if player == None: return
+    if player == None:
+        return
 
-	vehicleType = getVehicleType(vehicle.templateName)
-	if vehicleType != VEHICLE_TYPE_SOLDIER:
-		rootVehicle = bf2.objectManager.getRootParent(vehicle)
-		vehicleType = getVehicleType(rootVehicle.templateName)
-	else: rootVehicle = vehicle
-	
-	if vehicleType != VEHICLE_TYPE_SOLDIER:
-		for w in player.stats.weapons.itervalues():
-			w.exit(player)
+    vehicleType = getVehicleType(vehicle.templateName)
+    if vehicleType != VEHICLE_TYPE_SOLDIER:
+        rootVehicle = bf2.objectManager.getRootParent(vehicle)
+        vehicleType = getVehicleType(rootVehicle.templateName)
+    else:
+        rootVehicle = vehicle
 
-	weapon = player.getPrimaryWeapon()
-	if weapon:
-		weaponType = getWeaponType(weapon.templateName)
-		player.stats.weapons[weaponType].enter(player)
+    if vehicleType != VEHICLE_TYPE_SOLDIER:
+        for w in player.stats.weapons.itervalues():
+            w.exit(player)
 
-	if not vehicleType in player.stats.vehicles:
-		player.stats.vehicles[vehicleType] = VehicleStat()
-		
-	player.stats.vehicles[vehicleType].enter(player)
-	if vehicleType != VEHICLE_TYPE_UNKNOWN:
-		player.stats.lastVehicleType = vehicleType
-		
-	weapon = player.getPrimaryWeapon()
-	if weapon:
-		player.stats.lastWeaponType = getWeaponType(weapon.templateName)
-	
-	dconCollectBulletsFired(player)
+    weapon = player.getPrimaryWeapon()
+    if weapon:
+        weaponType = getWeaponType(weapon.templateName)
+        player.stats.weapons[weaponType].enter(player)
+
+    if not vehicleType in player.stats.vehicles:
+        player.stats.vehicles[vehicleType] = VehicleStat()
+
+    player.stats.vehicles[vehicleType].enter(player)
+    if vehicleType != VEHICLE_TYPE_UNKNOWN:
+        player.stats.lastVehicleType = vehicleType
+
+    weapon = player.getPrimaryWeapon()
+    if weapon:
+        player.stats.lastWeaponType = getWeaponType(weapon.templateName)
+
+    dconCollectBulletsFired(player)
 
 
 def dconOnExitVehicle(player, vehicle):
-	
-	vehicleType = getVehicleType(vehicle.templateName)
-	if vehicleType != VEHICLE_TYPE_SOLDIER:
-		rootVehicle = bf2.objectManager.getRootParent(vehicle)
-		vehicleType = getVehicleType(rootVehicle.templateName)
-		
-		# keep track of last driver, for road kill scoring purposes
-		if rootVehicle == vehicle:
-			vehicle.lastDrivingPlayerIndex = player.index
-		
-	else: rootVehicle = vehicle
 
-	weapon = player.getPrimaryWeapon()
-	if weapon:
-		weaponType = getWeaponType(weapon.templateName)
-		player.stats.weapons[weaponType].enter(player)
-	
-	player.stats.vehicles[vehicleType].exit(player)
+    vehicleType = getVehicleType(vehicle.templateName)
+    if vehicleType != VEHICLE_TYPE_SOLDIER:
+        rootVehicle = bf2.objectManager.getRootParent(vehicle)
+        vehicleType = getVehicleType(rootVehicle.templateName)
 
-	weapon = player.getPrimaryWeapon()
-	if weapon:
-		player.stats.lastWeaponType = getWeaponType(weapon.templateName)
+        # keep track of last driver, for road kill scoring purposes
+        if rootVehicle == vehicle:
+            vehicle.lastDrivingPlayerIndex = player.index
 
-	dconCollectBulletsFired(player)
+    else:
+        rootVehicle = vehicle
+
+    weapon = player.getPrimaryWeapon()
+    if weapon:
+        weaponType = getWeaponType(weapon.templateName)
+        player.stats.weapons[weaponType].enter(player)
+
+    player.stats.vehicles[vehicleType].exit(player)
+
+    weapon = player.getPrimaryWeapon()
+    if weapon:
+        player.stats.lastWeaponType = getWeaponType(weapon.templateName)
+
+    dconCollectBulletsFired(player)
 
 
 def dconOnPlayerSpawn(player, soldier):
 
-	startSpawned(player)
-	if player.getSquadId() != 0: startInSquad(player)
-	if player.isSquadLeader(): startAsSql(player)		
-	if player.isCommander(): startAsCmd(player)
+    startSpawned(player)
+    if player.getSquadId() != 0:
+        startInSquad(player)
+    if player.isSquadLeader():
+        startAsSql(player)
+    if player.isCommander():
+        startAsCmd(player)
 
-	dconOnEnterVehicle(player, soldier)
-	player.soldier = soldier
+    dconOnEnterVehicle(player, soldier)
+    player.soldier = soldier
 
 
 def dconOnPickupKit(player, kit):
-	kitType = getKitType(kit.templateName)
+    kitType = getKitType(kit.templateName)
 
-	if not kitType in player.stats.kits:
-		player.stats.kits[kitType] = KitStat()
+    if not kitType in player.stats.kits:
+        player.stats.kits[kitType] = KitStat()
 
-	player.stats.kits[kitType].enter(player)
-	player.stats.lastKitType = kitType
-	
-	weapon = player.getPrimaryWeapon()
-	if weapon:
-		player.stats.lastWeaponType = getWeaponType(weapon.templateName)
+    player.stats.kits[kitType].enter(player)
+    player.stats.lastKitType = kitType
+
+    weapon = player.getPrimaryWeapon()
+    if weapon:
+        player.stats.lastWeaponType = getWeaponType(weapon.templateName)
 
 
-	
 def dconOnDropKit(player, kit):
-	kitType = getKitType(kit.templateName)
-	player.stats.kits[kitType].exit(player)
-	
-	for w in player.stats.weapons.itervalues():
-		w.exit(player)
-	
-	dconCollectBulletsFired(player)
+    kitType = getKitType(kit.templateName)
+    player.stats.kits[kitType].exit(player)
 
+    for w in player.stats.weapons.itervalues():
+        w.exit(player)
+
+    dconCollectBulletsFired(player)
 
 
 def dconOnPlayerChangeWeapon(player, oldWeapon, newWeapon):
-	if oldWeapon:
-		oldWeaponType = getWeaponType(oldWeapon.templateName)
-		player.stats.weapons[oldWeaponType].exit(player)
-		
-	if newWeapon:
-		newWeaponType = getWeaponType(newWeapon.templateName)
-		player.stats.weapons[newWeaponType].enter(player)
-		player.stats.lastWeaponType = newWeaponType
+    if oldWeapon:
+        oldWeaponType = getWeaponType(oldWeapon.templateName)
+        player.stats.weapons[oldWeaponType].exit(player)
+
+    if newWeapon:
+        newWeaponType = getWeaponType(newWeapon.templateName)
+        player.stats.weapons[newWeaponType].enter(player)
+        player.stats.lastWeaponType = newWeaponType
+
 
 def dconOnPlayerKilled(victim, attacker, weapon, assists, object):
 
-	# check if killed by vehicle in motion
-	killedByEmptyVehicle = False
-	if attacker == None and weapon == None and object != None:
-		if hasattr(object, 'lastDrivingPlayerIndex'):
-			attacker = bf2.playerManager.getPlayerByIndex(object.lastDrivingPlayerIndex)
-			killedByEmptyVehicle = True
+    # check if killed by vehicle in motion
+    killedByEmptyVehicle = False
+    if attacker == None and weapon == None and object != None:
+        if hasattr(object, "lastDrivingPlayerIndex"):
+            attacker = bf2.playerManager.getPlayerByIndex(object.lastDrivingPlayerIndex)
+            killedByEmptyVehicle = True
 
-	# killed by enemy
-	if attacker != None:
+            # killed by enemy
+    if attacker != None:
 
-		# no kill stats for teamkills / suicides!
-		if attacker.getTeam() != victim.getTeam():
-	
-			# streaks
-			attacker.stats.currentKillStreak += 1
-			if attacker.stats.currentKillStreak > attacker.stats.longestKillStreak:
-				attacker.stats.longestKillStreak = attacker.stats.currentKillStreak
-	
-			# end current death streak
-			attacker.stats.currentDeathStreak = 0  
+        # no kill stats for teamkills / suicides!
+        if attacker.getTeam() != victim.getTeam():
 
-			# killedBy
-			if attacker != None:
-				if not victim.stats.connectionOrderNr in attacker.stats.killedPlayer:
-					attacker.stats.killedPlayer[victim.stats.connectionOrderNr] = 0
-				attacker.stats.killedPlayer[victim.stats.connectionOrderNr] += 1
-			
-				if not attacker.stats.connectionOrderNr in victim.stats.killedByPlayer:
-					victim.stats.killedByPlayer[attacker.stats.connectionOrderNr] = 0
-				victim.stats.killedByPlayer[attacker.stats.connectionOrderNr] += 1
-		
-		
-			# weapon stats
-			if weapon != None:
-				weaponType = getWeaponType(weapon.templateName)
-	
-				if attacker != None:
-					attacker.stats.weapons[weaponType].kills += 1
+            # streaks
+            attacker.stats.currentKillStreak += 1
+            if attacker.stats.currentKillStreak > attacker.stats.longestKillStreak:
+                attacker.stats.longestKillStreak = attacker.stats.currentKillStreak
 
-				if victim != None:
-					victim.stats.weapons[weaponType].killedBy += 1
-			
-			# vehicle stats
-			vehicleType = None
-			if killedByEmptyVehicle:
-				vehicleType = getVehicleType(object.templateName)
-			else:
-				vehicle = attacker.getVehicle()
-				vehicleType = getVehicleType(vehicle.templateName)
-				
-				if vehicleType != VEHICLE_TYPE_SOLDIER:
-					rootVehicle = bf2.objectManager.getRootParent(vehicle)
-					if rootVehicle != None:
-						vehicleType = getVehicleType(rootVehicle.templateName)
-		
-			if vehicleType != None:		
-				if attacker != None:
-					attacker.stats.vehicles[vehicleType].kills += 1
-				if victim != None:
-					victim.stats.vehicles[vehicleType].killedBy += 1
-	
-				# road kill
-				if weapon == None and object != None:
-					attacker.stats.vehicles[vehicleType].roadKills += 1
-		
-		
-			# kit stats
-			if attacker != None:
-				kit = attacker.getKit()
-				if kit != None:
-					kitTemplateName = kit.templateName
-					kitType = getKitType(kitTemplateName)
-				elif hasattr(attacker, 'lastKitType'):
-					kitType = attacker.lastKitType
-				else:
-					return
-							
-				attacker.stats.kits[kitType].kills += 1
-	
-	# death stats are handled in onPlayerDeath.
+                # end current death streak
+            attacker.stats.currentDeathStreak = 0
 
-	dconCollectBulletsFired(attacker)
+            # killedBy
+            if attacker != None:
+                if not victim.stats.connectionOrderNr in attacker.stats.killedPlayer:
+                    attacker.stats.killedPlayer[victim.stats.connectionOrderNr] = 0
+                attacker.stats.killedPlayer[victim.stats.connectionOrderNr] += 1
+
+                if not attacker.stats.connectionOrderNr in victim.stats.killedByPlayer:
+                    victim.stats.killedByPlayer[attacker.stats.connectionOrderNr] = 0
+                victim.stats.killedByPlayer[attacker.stats.connectionOrderNr] += 1
+
+                # weapon stats
+            if weapon != None:
+                weaponType = getWeaponType(weapon.templateName)
+
+                if attacker != None:
+                    attacker.stats.weapons[weaponType].kills += 1
+
+                if victim != None:
+                    victim.stats.weapons[weaponType].killedBy += 1
+
+                    # vehicle stats
+            vehicleType = None
+            if killedByEmptyVehicle:
+                vehicleType = getVehicleType(object.templateName)
+            else:
+                vehicle = attacker.getVehicle()
+                vehicleType = getVehicleType(vehicle.templateName)
+
+                if vehicleType != VEHICLE_TYPE_SOLDIER:
+                    rootVehicle = bf2.objectManager.getRootParent(vehicle)
+                    if rootVehicle != None:
+                        vehicleType = getVehicleType(rootVehicle.templateName)
+
+            if vehicleType != None:
+                if attacker != None:
+                    attacker.stats.vehicles[vehicleType].kills += 1
+                if victim != None:
+                    victim.stats.vehicles[vehicleType].killedBy += 1
+
+                    # road kill
+                if weapon == None and object != None:
+                    attacker.stats.vehicles[vehicleType].roadKills += 1
+
+                    # kit stats
+            if attacker != None:
+                kit = attacker.getKit()
+                if kit != None:
+                    kitTemplateName = kit.templateName
+                    kitType = getKitType(kitTemplateName)
+                elif hasattr(attacker, "lastKitType"):
+                    kitType = attacker.lastKitType
+                else:
+                    return
+
+                attacker.stats.kits[kitType].kills += 1
+
+                # death stats are handled in onPlayerDeath.
+
+    dconCollectBulletsFired(attacker)
 
 
 def dconOnPlayerDeath(victim, vehicle):
 
-	# vehicle is already exited, as this happens before actual death. That doesnt stop us from dying in it.
-	rootVehicle = bf2.objectManager.getRootParent(vehicle)
-	vehicleType = getVehicleType(rootVehicle.templateName)
+    # vehicle is already exited, as this happens before actual death. That doesnt stop us from dying in it.
+    rootVehicle = bf2.objectManager.getRootParent(vehicle)
+    vehicleType = getVehicleType(rootVehicle.templateName)
 
-	stopSpawned(victim)
-	stopInSquad(victim)
-	stopAsSql(victim)
-	stopAsCmd(victim)
-		
-	dconOnExitVehicle(victim, victim.soldier)
-	finalizeBulletsFired(victim)
-	clearBulletsFired(victim)
-		
-	# streaks
-	victim.stats.currentDeathStreak += 1
-	if victim.stats.currentDeathStreak > victim.stats.longestDeathStreak: 
-		victim.stats.longestDeathStreak = victim.stats.currentDeathStreak
+    stopSpawned(victim)
+    stopInSquad(victim)
+    stopAsSql(victim)
+    stopAsCmd(victim)
 
-	# end current kill streak
-	victim.stats.currentKillStreak = 0 
+    dconOnExitVehicle(victim, victim.soldier)
+    finalizeBulletsFired(victim)
+    clearBulletsFired(victim)
 
-	victim.stats.vehicles[vehicleType].deaths += 1
+    # streaks
+    victim.stats.currentDeathStreak += 1
+    if victim.stats.currentDeathStreak > victim.stats.longestDeathStreak:
+        victim.stats.longestDeathStreak = victim.stats.currentDeathStreak
 
-	# kit is already dropped, so we have to get the last kit used
-	victim.stats.kits[victim.stats.lastKitType].deaths += 1
-		
-	# weapon is already dropped, so we gave to get the last weapon used
-	victim.stats.weapons[victim.stats.lastWeaponType].deaths += 1
+        # end current kill streak
+    victim.stats.currentKillStreak = 0
 
-#update accuracy on weapon, kit and vehicle
+    victim.stats.vehicles[vehicleType].deaths += 1
+
+    # kit is already dropped, so we have to get the last kit used
+    victim.stats.kits[victim.stats.lastKitType].deaths += 1
+
+    # weapon is already dropped, so we gave to get the last weapon used
+    victim.stats.weapons[victim.stats.lastWeaponType].deaths += 1
+
+
+# update accuracy on weapon, kit and vehicle
 def dconCollectBulletsFired(player):
-	if player == None: return
-	
-	# count bullets fired
-	bulletsFired = player.score.bulletsFired
-	totBulletsFired = 0
-	kitBulletsFired = 0
-	for b in bulletsFired:
-		templateName = b[0]
-		nr = b[1]
+    if player == None:
+        return
 
-		weaponType = getWeaponType(templateName)
-		player.stats.weapons[weaponType].bulletsFiredTemp = nr
-		totBulletsFired += nr
+    # count bullets fired
+    bulletsFired = player.score.bulletsFired
+    totBulletsFired = 0
+    kitBulletsFired = 0
+    for b in bulletsFired:
+        templateName = b[0]
+        nr = b[1]
 
-		# only count kit stats for soldier-type weapons
-		if weaponType != WEAPON_TYPE_UNKNOWN:
-			kitBulletsFired += nr
-					
-	
-	# count bullets hit 
-	bulletsHit = player.score.bulletsGivingDamage
-	totBulletsHit = 0
-	kitBulletsHit = 0
-	for b in bulletsHit:
-		templateName = b[0]
-		nr = b[1]
+        weaponType = getWeaponType(templateName)
+        player.stats.weapons[weaponType].bulletsFiredTemp = nr
+        totBulletsFired += nr
 
-		weaponType = getWeaponType(templateName)
-		player.stats.weapons[weaponType].bulletsHitTemp = nr
-		totBulletsHit += nr
+        # only count kit stats for soldier-type weapons
+        if weaponType != WEAPON_TYPE_UNKNOWN:
+            kitBulletsFired += nr
 
-		# only count kit stats for soldier-type weapons
-		if weaponType != WEAPON_TYPE_UNKNOWN:
-			kitBulletsHit += nr
-	
+            # count bullets hit
+    bulletsHit = player.score.bulletsGivingDamage
+    totBulletsHit = 0
+    kitBulletsHit = 0
+    for b in bulletsHit:
+        templateName = b[0]
+        nr = b[1]
 
-	# dont bother giving kit stats if we're in a vehicle
-	kit = player.getKit()
-	if kit != None:
-		kitType = getKitType(kit.templateName)
-		player.stats.kits[kitType].bulletsFiredTemp = kitBulletsFired
-		player.stats.kits[kitType].bulletsHitTemp = kitBulletsHit
+        weaponType = getWeaponType(templateName)
+        player.stats.weapons[weaponType].bulletsHitTemp = nr
+        totBulletsHit += nr
 
-	vehicle = player.getVehicle()
-	if vehicle != None:
-		rootVehicle = bf2.objectManager.getRootParent(vehicle)
-		vehicleType = getVehicleType(rootVehicle.templateName)
+        # only count kit stats for soldier-type weapons
+        if weaponType != WEAPON_TYPE_UNKNOWN:
+            kitBulletsHit += nr
 
-		player.stats.vehicles[vehicleType].bulletsFiredTemp = totBulletsFired
-		player.stats.vehicles[vehicleType].bulletsHitTemp = totBulletsHit
+            # dont bother giving kit stats if we're in a vehicle
+    kit = player.getKit()
+    if kit != None:
+        kitType = getKitType(kit.templateName)
+        player.stats.kits[kitType].bulletsFiredTemp = kitBulletsFired
+        player.stats.kits[kitType].bulletsHitTemp = kitBulletsHit
+
+    vehicle = player.getVehicle()
+    if vehicle != None:
+        rootVehicle = bf2.objectManager.getRootParent(vehicle)
+        vehicleType = getVehicleType(rootVehicle.templateName)
+
+        player.stats.vehicles[vehicleType].bulletsFiredTemp = totBulletsFired
+        player.stats.vehicles[vehicleType].bulletsHitTemp = totBulletsHit
