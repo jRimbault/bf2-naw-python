@@ -1,8 +1,6 @@
 # stats keys
 
-import host
 import string
-from bf2 import g_debug
 
 
 VEHICLE_TYPE_ARMOR = 0
@@ -955,66 +953,49 @@ UNKNOWN_GAMEMODE = 99
 
 def getVehicleType(templateName):
     try:
-        vehicleType = vehicleTypeMap[string.lower(templateName)]
+        return vehicleTypeMap[string.lower(templateName)]
     except KeyError:
         return VEHICLE_TYPE_UNKNOWN
-
-    return vehicleType
 
 
 def getWeaponType(templateName):
     try:
-        weaponType = weaponTypeMap[string.lower(templateName)]
+        return weaponTypeMap[string.lower(templateName)]
     except KeyError:
         return WEAPON_TYPE_UNKNOWN
-
-    return weaponType
 
 
 def getKitType(templateName):
     try:
-        kitType = kitTypeMap[string.lower(templateName)]
+        return kitTypeMap[string.lower(templateName)]
     except KeyError:
         return KIT_TYPE_UNKNOWN
-
-    return kitType
 
 
 def getArmy(templateName):
     try:
-        army = armyMap[string.lower(templateName)]
+        return armyMap[string.lower(templateName)]
     except KeyError:
         return ARMY_UNKNOWN
-
-    return army
 
 
 def getMapId(mapName):
     try:
-        mapId = mapMap[string.lower(mapName)]
+        return mapMap[string.lower(mapName)]
     except KeyError:
         return UNKNOWN_MAP
-
-    return mapId
 
 
 def getGameModeId(gameMode):
     try:
-        gameModeId = gameModeMap[string.lower(gameMode)]
+        return gameModeMap[string.lower(gameMode)]
     except KeyError:
         return UNKNOWN_GAMEMODE
-
-    return gameModeId
 
 
 def getRootParent(obj):
     parent = obj.getParent()
-
-    if parent == None:
-        return obj
-
-    return getRootParent(parent)
-
-
-if g_debug:
-    print "Stat constants loaded"
+    while parent != None:
+        obj = parent
+        parent = obj.getParent()
+    return obj
