@@ -7,7 +7,6 @@ import sys
 import traceback
 
 import host
-import bf2
 
 
 def print_exception():

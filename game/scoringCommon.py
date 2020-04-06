@@ -309,10 +309,10 @@ def giveDriverSpecialPoint(player):
 
 
 def onPlayerTeamDamagePoint(player, object):
-    vehicleType = getVehicleType(object.templateName)
+    vehicleType = constants.getVehicleType(object.templateName)
 
     if not player.isCommander():
-        if vehicleType == VEHICLE_TYPE_SOLDIER:
+        if vehicleType == constants.VEHICLE_TYPE_SOLDIER:
             player.score.teamDamages += 1
             addScore(player, SCORE_TEAMDAMAGE, RPL)
         else:
