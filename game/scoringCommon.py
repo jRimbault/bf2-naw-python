@@ -359,7 +359,7 @@ def createData(victim, attacker, weapon):
         # attacker data
         if attacker != None:
             attackerName = attacker.getName()
-            attackerPosition = game.players.getposition(attacker)
+            attackerPosition = game.players.getPosition(attacker)
         else:
             attackerName = None
             attackerPosition = None
@@ -367,8 +367,8 @@ def createData(victim, attacker, weapon):
         # victim data
         if victim != None:
             victimName = victim.getName()
-            victimPosition = game.players.getposition(victim)
-            victimSpeed = game.players.getspeed(victim)
+            victimPosition = game.players.getPosition(victim)
+            victimSpeed = game.players.getSpeed(victim)
         else:
             victimName = None
             victimPosition = None
@@ -389,7 +389,7 @@ def createData(victim, attacker, weapon):
             "weapon": weapon,
         }
     except:
-        game.common.print_exception()
+        game.common.printException()
 
     return {}
 
@@ -407,7 +407,7 @@ def delayedPlayerKilled(data):
         speedText = getSpeedDescription(victim["speed"])
         killDistance = getKillDistance(attacker["position"], victim["position"])
 
-        game.common.sayall(
+        game.common.sayAll(
             " ".join(
                 [
                     attacker["name"],
@@ -422,7 +422,7 @@ def delayedPlayerKilled(data):
             )
         )
     except:
-        game.common.print_exception()
+        game.common.printException()
 
 
 def getSpeedDescription(speed):

@@ -9,7 +9,7 @@ import traceback
 import host
 
 
-def print_exception():
+def printException():
     exceptiontype, exceptionmessage, tracebackobject = sys.exc_info()
 
     while tracebackobject:
@@ -22,7 +22,7 @@ def print_exception():
         print "Exception in: " + filenametext + " (line " + str(
             traceback.tb_lineno(tracebackobject)
         ) + ")"
-        sayall(
+        sayAll(
             "Exception in: "
             + filenametext
             + " (line "
@@ -35,8 +35,8 @@ def print_exception():
     print "Exception type: " + str(exceptiontype)
     print "Exception message: " + str(exceptionmessage)
 
-    sayall("Exception type: " + str(exceptiontype))
-    sayall("Exception message: " + str(exceptionmessage))
+    sayAll("Exception type: " + str(exceptiontype))
+    sayAll("Exception message: " + str(exceptionmessage))
 
 
 def rcon_invoke(command):
@@ -46,7 +46,7 @@ def rcon_invoke(command):
     return result
 
 
-def sayall(text):
+def sayAll(text):
     text = text.replace('"', "'")
     rcon_invoke('game.sayall "' + str(text) + '"')
 

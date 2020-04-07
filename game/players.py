@@ -14,10 +14,10 @@ SPEEDTIMER_INTERVAL = 0.5
 
 
 def init():
-    host.registerGameStatusHandler(gamestatus)
+    host.registerGameStatusHandler(gameStatus)
 
 
-def gamestatus(status):
+def gameStatus(status):
     global speedtimer
     if status == bf2.GameStatus.Playing:
         try:
@@ -25,7 +25,7 @@ def gamestatus(status):
         except:
             pass
         speedtimer = None
-        speedtimer = bf2.Timer(speedcalculation, SPEEDTIMER_INTERVAL, 1)
+        speedtimer = bf2.Timer(speedCalculation, SPEEDTIMER_INTERVAL, 1)
         speedtimer.setRecurring(SPEEDTIMER_INTERVAL)
 
     if status == bf2.GameStatus.EndGame:
@@ -36,10 +36,10 @@ def gamestatus(status):
         speedtimer = None
 
 
-def speedcalculation(data):
+def speedCalculation(data):
     try:
         for player in bf2.playerManager.getPlayers():
-            curpos = getposition(player)
+            curpos = getPosition(player)
 
             if not hasattr(player, "oldpos"):
                 player.oldpos = curpos
@@ -49,17 +49,17 @@ def speedcalculation(data):
             )
             player.oldpos = curpos
     except:
-        game.common.print_exception()
+        game.common.printException()
 
 
-def getspeed(player):
+def getSpeed(player):
     if hasattr(player, "speed"):
         return player.speed
     else:
         return 0
 
 
-def getposition(player):
+def getPosition(player):
     vehicle = player.getVehicle()
     if vehicle != None:
         return vehicle.getPosition()
