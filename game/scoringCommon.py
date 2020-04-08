@@ -398,7 +398,12 @@ def createData(victim, attacker, weapon):
 def showDistanceForKill(data):
     try:
         if not isCorrectWeapon(
-            data["weapon"], [constants.WEAPON_TYPE_SNIPER, constants.WEAPON_TYPE_KNIFE]
+            data["weapon"],
+            [
+                constants.WEAPON_TYPE_SNIPER,
+                constants.WEAPON_TYPE_KNIFE,
+                constants.WEAPON_TYPE_SHOTGUN,
+            ],
         ):
             return
 
