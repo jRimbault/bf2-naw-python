@@ -189,7 +189,7 @@ def onPlayerKilled(victim, attacker, weapon, assists, object):
         countAssists = True
 
         # headshot/range/speed message
-        bf2.Timer(delayedPlayerKilled, 0.1, 1, createData(victim, attacker, weapon))
+        bf2.Timer(showDistanceForKill, 0.1, 1, createData(victim, attacker, weapon))
 
     # kill assist
     if countAssists and victim:
@@ -395,9 +395,11 @@ def createData(victim, attacker, weapon):
 
 
 # takes the data bundle made by `createData` as input
-def delayedPlayerKilled(data):
+def showDistanceForKill(data):
     try:
-        if not isSniperRifle(data["weapon"]):
+        if not isCorrectWeapon(
+            data["weapon"], [constants.WEAPON_TYPE_SNIPER, constants.WEAPON_TYPE_KNIFE]
+        ):
             return
 
         attacker = data["attacker"]
@@ -437,11 +439,15 @@ def getSpeedDescription(speed):
     return "stationary"
 
 
-def isSniperRifle(weapon):
-    return (
-        weapon is not None
-        and constants.getWeaponType(weapon.templateName) == constants.WEAPON_TYPE_SNIPER
-    )
+def isCorrectWeapon(weapon, weaponTypes):
+    if weapon is None:
+        return False
+    currentWeaponType = constants.getWeaponType(weapon.templateName)
+    # return any(weaponType == currentWeaponType for weaponType in weaponTypes)
+    for weaponType in weaponTypes:
+        if weaponType == currentWeaponType:
+            return True
+    return False
 
 
 def getHitRegion(victim):
